@@ -6,6 +6,7 @@ import { Configuration, OpenAIApi } from "openai";
 
 import dotenv from "dotenv";
 import readline from "readline";
+//import process from "process";
 
 dotenv.config();
 
@@ -27,6 +28,42 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
+// ------------------------------------------------------------------------------------
+// Command line 
+// ------------------------------------------------------------------------------------
+
+const commands = "\
+Command list:\n\
+all: print history of all chats\n\
+exit: stop bot\n\
+mem: print memory usage";
+
+
+const rl = readline.createInterface({ 
+  input: process.stdin,
+  output: process.stdout
+});
+
+rl.setPrompt('>');
+
+ 
+rl.on('line', (input) => {
+
+  switch (input) {
+    case "help": console.log( commands ); break;
+    case "all": console.log(history); break;
+    case "mem":
+
+        for (const [key,value] of Object.entries(process.memoryUsage())){
+          console.log(`${key}: ${parseFloat( value / 1024 ).toFixed(2)} KB` );
+        }
+
+      break;      
+    case "exit": rl.close(); process.exit(0);
+    default:  
+      console.log("Invalid command. Type  \'help\' for help."); break;
+  }
+});
 
 // ------------------------------------------------------------------------------------
 // Init bot
@@ -34,7 +71,7 @@ const openai = new OpenAIApi(configuration);
 
 // This is quick and dirty and the bot will eventually run out of memory. Okay for now.
 
-let allChats = [];  
+let history = [];  
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
@@ -46,7 +83,7 @@ bot.on(message('text'), async (ctx) => {
 
   // save the user's message
 
-  allChats.push({
+  history.push({
     role: "user",
     user_id: message.from.id,
     content: message.text
@@ -58,7 +95,7 @@ bot.on(message('text'), async (ctx) => {
   
   // Create history containing both the user's messages the replies from bot
 
-  allChats.forEach(entry => {
+  history.forEach(entry => {
     if ( entry.user_id === message.from.id ) 
     {
       messagesFromThisUser.push( {
@@ -67,12 +104,6 @@ bot.on(message('text'), async (ctx) => {
       }); 
     } 
   });
-
-  console.log(" ============= All Conversations have %d messages", allChats.length );
-  console.log(" ============= Conversation has %d messages", messagesFromThisUser.length );
-  console.log(messagesFromThisUser);
-
-  console.log( )
 
   // call ChatGPT
   
@@ -89,7 +120,7 @@ bot.on(message('text'), async (ctx) => {
 
     // Success. Add the message to the history, reply in Telegram
 
-    allChats.push({
+    history.push({
         role: "assistant",
         user_id: message.from.id,
         content: answer
@@ -108,7 +139,8 @@ bot.on(message('text'), async (ctx) => {
 // ------------------------------------------------------------------------------------
 
 function startBot() {
-	console.log('Bot is starting...');
+	console.log('Kira bot is starting.');
+	console.log( commands );
 	bot.launch();
 }
 
