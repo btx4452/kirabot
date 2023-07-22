@@ -50,8 +50,8 @@ rl.setPrompt('>');
 rl.on('line', (input) => {
 
   switch (input) {
-    case "help": console.log( commands ); break;
-    case "all": console.log(history); break;
+    case "h":
+    case "help":  console.log(commands); break;
     case "mem":
 
         for (const [key,value] of Object.entries(process.memoryUsage())){
@@ -59,6 +59,7 @@ rl.on('line', (input) => {
         }
 
       break;      
+    case "all": printHistory(); break;      
     case "exit": rl.close(); process.exit(0);
     default:  
       console.log("Invalid command. Type  \'help\' for help."); break;
@@ -133,6 +134,17 @@ bot.on(message('text'), async (ctx) => {
   });
   
 });
+
+// ------------------------------------------------------------------------------------
+// Launch bot
+// ------------------------------------------------------------------------------------
+
+function printHistory()
+{
+  history.forEach(entry => {
+    console.log( `user id: ${entry.user_id}: role: ${entry.role} message: ${entry.content}` )
+  });
+}
 
 // ------------------------------------------------------------------------------------
 // Launch bot
