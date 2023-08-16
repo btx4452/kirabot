@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm install openapi telegraf dotenv readline",
+    "build": "npm install openapi telegraf dotenv express",
     "start": "node index.js"
   },
   "keywords": [],
@@ -13,10 +13,10 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.3.1",
+    "express": "^4.18.2",
     "openai": "^3.3.0",
-    "readline": "^1.3.0",
+    "openapi": "^1.0.1",
     "telegraf": "^4.12.2"
   },
-  "description": "",
-  "devDependencies": {}
+  "description": ""
 }

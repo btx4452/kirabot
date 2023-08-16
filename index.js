@@ -5,10 +5,19 @@ import { message } from 'telegraf/filters';
 import { Configuration, OpenAIApi } from "openai";
 
 import dotenv from "dotenv";
-import readline from "readline";
-//import process from "process";
+dotenv.config(); 
 
-dotenv.config();
+// ------------------------------------------------------------------------------------
+// .endv must contain these entries 
+//
+// BOT_TOKEN= Telegraam bot tocken 
+// OPENAI_API_KEY= OpenAI API key 
+// CHAT_GPT_PROMPT= system prompt for GPT
+// ------------------------------------------------------------------------------------
+
+import express from 'express';
+const app = express();
+
 
 // ------------------------------------------------------------------------------------
 // Initialize ChatGPT model 
@@ -17,9 +26,10 @@ dotenv.config();
 const MODEL = "gpt-3.5-turbo";
 
 const systemPrompt = [
-    { role: "system", content: "When I ask you your name, you will reply your name is Kira.\
-    When I ask you your age, you will reply you are 22. Your are a virtual musician. When I ask you a question, you will reply \
-    with answer that is sarcastic."}
+    { 
+      role: "system", 
+      content: process.env.CHAT_GPT_PROMPT
+    }
 ];
 
 const configuration = new Configuration({
@@ -29,42 +39,66 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 // ------------------------------------------------------------------------------------
-// Command line 
+// Control commands 
 // ------------------------------------------------------------------------------------
 
-const commands = "\
-Command list:\n\
-all: print history of all chats\n\
-exit: stop bot\n\
-mem: print memory usage";
 
 
-const rl = readline.createInterface({ 
-  input: process.stdin,
-  output: process.stdout
+// Listen to the App Engine-specified port, or 8080 otherwise
+
+app.get('/', (req, res) => {
+  res.send('Hello from kira bot!');
 });
 
-rl.setPrompt('>');
+// ------------------------------------------------------------------------------------
+// stop 
+// ------------------------------------------------------------------------------------
 
- 
-rl.on('line', (input) => {
+app.get('/stop', (req, res) => {
+  res.send('Exiting');
+  process.exit(0);
+});
 
-  switch (input) {
-    case "h":
-    case "help":  console.log(commands); break;
-    case "mem":
 
-        for (const [key,value] of Object.entries(process.memoryUsage())){
-          console.log(`${key}: ${parseFloat( value / 1024 ).toFixed(2)} KB` );
-        }
+// ------------------------------------------------------------------------------------
+// memory 
+// ------------------------------------------------------------------------------------
 
-      break;      
-    case "all": printHistory(); break;      
-    case "exit": rl.close(); process.exit(0);
-    default:  
-      console.log("Invalid command. Type  \'help\' for help."); break;
+app.get('/memory', (req, res) => {
+
+  let str = ""; 
+  for (const [key,value] of Object.entries(process.memoryUsage())){
+    str += `${key}: ${parseFloat( value / 1024 ).toFixed(2)} KB <br>`;
   }
+  res.send(str);
+  
 });
+
+// ------------------------------------------------------------------------------------
+// history 
+// ------------------------------------------------------------------------------------
+
+app.get('/history', (req, res) => {
+
+  let str = ""; 
+
+  history.forEach(entry => {
+    str +=  `user id: ${entry.user_id}: role: ${entry.role} message: ${entry.content} <br>` 
+  });
+
+  res.send(str);
+  
+});
+
+
+// Listen to the App Engine-specified port, or 8080 otherwise
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}...`);
+});
+
+//import process from "process";
+
 
 // ------------------------------------------------------------------------------------
 // Init bot
@@ -104,12 +138,11 @@ bot.on(message('text'), async (ctx) => {
         content: entry.content
       }); 
     } 
-  });
+  });  
 
   // call ChatGPT
   
-  await openai
-  .createChatCompletion({
+  await openai.createChatCompletion({
     model: MODEL,
     messages: messagesFromThisUser,
     max_tokens: 128,
@@ -135,29 +168,15 @@ bot.on(message('text'), async (ctx) => {
   
 });
 
-// ------------------------------------------------------------------------------------
-// Launch bot
-// ------------------------------------------------------------------------------------
 
-function printHistory()
-{
-  history.forEach(entry => {
-    console.log( `user id: ${entry.user_id}: role: ${entry.role} message: ${entry.content}` )
-  });
-}
 
 // ------------------------------------------------------------------------------------
 // Launch bot
 // ------------------------------------------------------------------------------------
 
-function startBot() {
-	console.log('Kira bot is starting.');
-	console.log( commands );
-	bot.launch();
-}
-
-// run startBot function
-startBot();
+console.log('Kira bot is starting.');
+console.log(process.env.CHAT_GPT_PROMPT);
+bot.launch();
 
 
 
