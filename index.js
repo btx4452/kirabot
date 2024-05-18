@@ -2,7 +2,7 @@
 import { Telegraf } from "telegraf";
 import { message } from 'telegraf/filters';
 
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
 
 import dotenv from "dotenv";
 dotenv.config(); 
@@ -32,11 +32,12 @@ const systemPrompt = [
     }
 ];
 
-const configuration = new Configuration({
-        apiKey: process.env.OPENAI_API_KEY,
-  });
 
-const openai = new OpenAIApi(configuration);
+// OpenAI library now reads the OPENAI_API_KEY environment variable by itself   
+// I am using the p.dxxxxx account with KiraBot project API key
+
+
+const openai = new OpenAI();
 
 // ------------------------------------------------------------------------------------
 // Control commands 
@@ -141,8 +142,9 @@ bot.on(message('text'), async (ctx) => {
   });  
 
   // call ChatGPT
-  
-  await openai.createChatCompletion({
+  console.log("--------- call ChatGPT -------------");
+
+  await openai.chat.completions.create({
     model: MODEL,
     messages: messagesFromThisUser,
     max_tokens: 128,
@@ -150,8 +152,8 @@ bot.on(message('text'), async (ctx) => {
     top_p: 1,
   })
   .then((res) => {
-    let answer = res.data.choices[0].message.content;
-
+    const answer = res.choices[0].message.content;
+   
     // Success. Add the message to the history, reply in Telegram
 
     history.push({
